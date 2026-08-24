@@ -47,6 +47,10 @@ function emitGameState(roomCode) {
 
     room.players.forEach(player => {
         const opponent = room.players.find(p => p.id !== player.id);
+        
+        // Get player-specific eliminated characters
+        const playerEliminated = room.playerEliminations?.[player.id] || [];
+        
         io.to(player.id).emit("gameState", {
             roomCode,
             phase: room.phase,
@@ -63,7 +67,7 @@ function emitGameState(roomCode) {
             gameStartedAt: room.gameStartedAt,
             winnerId: room.winnerId || null,
             result: room.result || null,
-            eliminatedCharacters: room.eliminatedCharacters || [],
+            eliminatedCharacters: playerEliminated, // Player-specific eliminations
             category: room.category || 'anime',
             categoryEmoji: categoryEmojis[room.category || 'anime'],
             categoryName: categoryNames[room.category || 'anime'],
@@ -142,11 +146,11 @@ io.on("connection", socket => {
             gameStartedAt: null,
             winnerId: null,
             result: null,
-            eliminatedCharacters: [],
             category: 'anime',
             turnTimeLeft: 60,
             timerInterval: null,
-            playAgainRequests: {}
+            playAgainRequests: {},
+            playerEliminations: {} // Track eliminations per player
         };
 
         socket.join(roomCode);
@@ -175,6 +179,8 @@ io.on("connection", socket => {
         }
 
         room.players.push({ id: socket.id, name, score: 0, character: null });
+        room.playerEliminations[socket.id] = []; // Initialize eliminations for new player
+        
         socket.join(roomCode);
         socket.roomCode = roomCode;
         socket.emit("roomJoined", { roomCode });
@@ -210,8 +216,12 @@ io.on("connection", socket => {
         if (room.players.length !== 2) return sendError(socket, "Exactly 2 players are required.");
 
         room.phase = "selecting";
-        room.eliminatedCharacters = [];
-        room.players.forEach(p => { p.character = null; p.score = 0; });
+        room.playerEliminations = {}; // Reset eliminations
+        room.players.forEach(p => { 
+            p.character = null; 
+            p.score = 0;
+            room.playerEliminations[p.id] = []; // Initialize empty eliminations
+        });
         io.to(socket.roomCode).emit("gameStarted");
         emitGameState(socket.roomCode);
     });
@@ -246,17 +256,31 @@ io.on("connection", socket => {
         const character = characters[room.category || 'anime'].find(c => c.id === charId);
         if (!character) return sendError(socket, "Invalid character.");
 
-        if (!room.eliminatedCharacters.includes(charId)) {
-            room.eliminatedCharacters.push(charId);
-        }
-
-        io.to(socket.id).emit("characterEliminated", { characterId: charId, byYou: true });
-        const opponent = room.players.find(p => p.id !== socket.id);
-        if (opponent) {
-            io.to(opponent.id).emit("characterEliminated", { characterId: charId, byYou: false });
+        // Only eliminate for the player who performed the action
+        if (!room.playerEliminations[socket.id]) {
+            room.playerEliminations[socket.id] = [];
         }
         
-        emitGameState(socket.roomCode);
+        if (!room.playerEliminations[socket.id].includes(charId)) {
+            room.playerEliminations[socket.id].push(charId);
+            
+            // Notify only the player who eliminated
+            io.to(socket.id).emit("characterEliminated", { 
+                characterId: charId, 
+                byYou: true 
+            });
+            
+            // Notify opponent that a character was eliminated (without revealing which one)
+            const opponent = room.players.find(p => p.id !== socket.id);
+            if (opponent) {
+                io.to(opponent.id).emit("opponentEliminated", { 
+                    message: "Your opponent eliminated a character!"
+                });
+            }
+            
+            // Update game state for both players (with their specific eliminations)
+            emitGameState(socket.roomCode);
+        }
     });
 
     socket.on("askQuestion", data => {
@@ -268,7 +292,6 @@ io.on("connection", socket => {
         const text = String(data?.text || "").trim();
         if (!text || text.length > 160) return sendError(socket, "Enter a question between 1 and 160 characters.");
         
-        // Server-side character name filtering
         if (containsCharacterName(text, room.category || 'anime')) {
             return sendError(socket, "❌ You cannot ask for the character's name directly! Be creative!");
         }
@@ -385,9 +408,13 @@ io.on("connection", socket => {
             room.gameStartedAt = null;
             room.winnerId = null;
             room.result = null;
-            room.eliminatedCharacters = [];
+            room.playerEliminations = {};
             room.playAgainRequests = {};
-            room.players.forEach(p => { p.character = null; p.score = 0; });
+            room.players.forEach(p => { 
+                p.character = null; 
+                p.score = 0;
+                room.playerEliminations[p.id] = [];
+            });
             if (room.timerInterval) {
                 clearInterval(room.timerInterval);
             }

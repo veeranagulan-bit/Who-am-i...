@@ -27,7 +27,7 @@ function showOnly(screen) {
     screen.classList.remove("hidden");
 }
 
-// Custom Alert System - Clean Game UI
+// Custom Alert System
 function showCustomAlert(title, message, icon = '⚠️', isDanger = false) {
     const alert = $("customAlert");
     $("alertTitle").textContent = title;
@@ -48,7 +48,6 @@ function showCustomAlert(title, message, icon = '⚠️', isDanger = false) {
     });
 }
 
-// Override showError to use custom alert
 function showError(message) {
     showCustomAlert('⚠️ Error', message, '❌', true);
 }
@@ -107,7 +106,6 @@ function showLobby() {
     }
 }
 
-// Category selection in lobby
 $("lobbyCategorySelect").onchange = function() {
     if (!isHost) return;
     const category = this.value;
@@ -369,11 +367,8 @@ function renderGuessGrid(characters, eliminated = []) {
 
 function containsCharacterName(text) {
     const lowerText = text.toLowerCase();
-    // Get all character names from the current category
     const characterNames = gameCharacters.map(c => c.name.toLowerCase());
-    // Check if any character name appears in the text (as a whole word)
     return characterNames.some(name => {
-        // Check for whole word match
         const regex = new RegExp('\\b' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
         return regex.test(text);
     });
@@ -383,7 +378,6 @@ function sendQuestion(text) {
     text = text.trim();
     if (!text || latestGameState?.yourTurn !== true || latestGameState?.pendingQuestion) return;
     
-    // Check for character names in the question
     if (containsCharacterName(text)) {
         showCustomAlert(
             '🚫 Rule Violation!',
@@ -456,32 +450,38 @@ $("guessButton").onclick = () => {
     document.querySelectorAll(".guess-character").forEach(c => c.classList.remove("selected"));
 };
 
+// Updated elimination handler - only updates this player's view
 socket.on("characterEliminated", data => {
-    if (!eliminatedCharacters.includes(data.characterId)) {
-        eliminatedCharacters.push(data.characterId);
-    }
-    
-    const card = document.querySelector(`.guess-character[data-character-id="${data.characterId}"]`);
-    if (card) {
-        card.classList.add("eliminated");
-        card.classList.remove("selected");
-    }
-    
-    if (selectedGuess?.id === data.characterId || selectedEliminateCharacter?.id === data.characterId) {
-        selectedGuess = null;
-        selectedEliminateCharacter = null;
-        $("selectedGuessText").textContent = "No character selected";
-        $("guessButton").disabled = true;
-        $("eliminateButton").disabled = true;
-    }
-    
     if (data.byYou) {
+        // Add to this player's eliminated list
+        if (!eliminatedCharacters.includes(data.characterId)) {
+            eliminatedCharacters.push(data.characterId);
+        }
+        
+        // Update the card visually
+        const card = document.querySelector(`.guess-character[data-character-id="${data.characterId}"]`);
+        if (card) {
+            card.classList.add("eliminated");
+            card.classList.remove("selected");
+        }
+        
+        if (selectedGuess?.id === data.characterId || selectedEliminateCharacter?.id === data.characterId) {
+            selectedGuess = null;
+            selectedEliminateCharacter = null;
+            $("selectedGuessText").textContent = "No character selected";
+            $("guessButton").disabled = true;
+            $("eliminateButton").disabled = true;
+        }
+        
         $("gameStatus").textContent = `✅ You eliminated a character!`;
         $("gameStatus").className = "game-status success";
-    } else {
-        $("gameStatus").textContent = `😮 Your opponent eliminated a character!`;
-        $("gameStatus").className = "game-status info";
     }
+});
+
+// Handle opponent elimination notification (without revealing which character)
+socket.on("opponentEliminated", data => {
+    $("gameStatus").textContent = `😮 ${data.message}`;
+    $("gameStatus").className = "game-status info";
 });
 
 socket.on("questionAnswered", data => {
