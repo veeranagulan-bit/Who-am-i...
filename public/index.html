@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Am I? - Multi-Category</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main id="homeScreen" class="screen">
+    <div class="home-content">
+        <div class="anime-badge">🎮 MULTI-CATEGORY</div>
+        <div class="logo">WHO AM I?</div>
+        <p class="subtitle">The 2-player character guessing battle</p>
+        
+        <!-- Category Showcase - Information Only -->
+        <div class="category-showcase">
+            <h3>📚 Available Categories</h3>
+            <div class="category-grid">
+                <div class="category-item">🎌 Anime</div>
+                <div class="category-item">🎮 Gaming</div>
+                <div class="category-item">🎬 Movies</div>
+                <div class="category-item">📺 TV Shows</div>
+                <div class="category-item">🎵 Music</div>
+                <div class="category-item">🏆 Sports</div>
+                <div class="category-item">🦸 Superheroes</div>
+                <div class="category-item">👾 Video Games</div>
+                <div class="category-item">📚 Books</div>
+                <div class="category-item">🎤 K-Pop</div>
+            </div>
+        </div>
+        
+        <div class="menu">
+            <button id="createGame">CREATE GAME</button>
+            <button id="joinGame" class="secondary-button">JOIN GAME</button>
+        </div>
+    </div>
+</main>
+
+<!-- Custom Alert Modal -->
+<div id="customAlert" class="custom-alert">
+    <div class="custom-alert-box">
+        <div class="alert-icon" id="alertIcon">⚠️</div>
+        <h3 id="alertTitle">Alert</h3>
+        <p id="alertMessage">This is an alert message.</p>
+        <button class="alert-button" id="alertButton">OK</button>
+    </div>
+</div>
+
+<div id="createModal" class="modal hidden">
+    <div class="modal-box">
+        <button class="modal-close" id="closeCreate">×</button>
+        <h2>🎮 Create Game</h2>
+        <p class="modal-help">Enter your name to start</p>
+        <input id="createName" type="text" placeholder="Enter your name" maxlength="15">
+        <button id="createRoom">CREATE ROOM</button>
+    </div>
+</div>
+
+<div id="joinModal" class="modal hidden">
+    <div class="modal-box">
+        <button class="modal-close" id="closeJoin">×</button>
+        <h2>🎮 Join Game</h2>
+        <p class="modal-help">Enter your name and room code</p>
+        <input id="joinName" type="text" placeholder="Enter your name" maxlength="15">
+        <input id="roomCode" type="text" placeholder="6-character room code" maxlength="6" style="text-transform:uppercase">
+        <button id="joinRoom">JOIN ROOM</button>
+    </div>
+</div>
+
+<main id="lobbyScreen" class="screen hidden">
+    <div class="lobby panel">
+        <div class="lobby-header">
+            <div>
+                <div class="anime-badge small" id="lobbyCategoryBadge">🎌 WHO AM I?</div>
+                <h1>GAME LOBBY</h1>
+                <p>Waiting for your opponent...</p>
+            </div>
+            <div class="room-code">
+                <span>ROOM CODE</span>
+                <strong id="displayRoomCode">------</strong>
+            </div>
+        </div>
+        <div class="lobby-content">
+            <section class="players-section">
+                <h2>👥 PLAYERS</h2>
+                <div id="playersList"></div>
+            </section>
+            <section class="game-info">
+                <h2>⚙️ GAME SETTINGS</h2>
+                <div class="setting">
+                    <span>CATEGORY</span>
+                    <select id="lobbyCategorySelect" class="category-select">
+                        <option value="anime">🎌 Anime</option>
+                        <option value="gaming">🎮 Gaming</option>
+                        <option value="movies">🎬 Movies</option>
+                        <option value="tvshows">📺 TV Shows</option>
+                        <option value="music">🎵 Music</option>
+                        <option value="sports">🏆 Sports</option>
+                        <option value="superheroes">🦸 Superheroes</option>
+                        <option value="videogames">👾 Video Games</option>
+                        <option value="books">📚 Books</option>
+                        <option value="kpop">🎤 K-Pop</option>
+                    </select>
+                </div>
+                <div class="setting"><span>PLAYERS</span><strong id="playerCount">0 / 2</strong></div>
+                <div class="setting"><span>MODE</span><strong>Turn Based</strong></div>
+            </section>
+        </div>
+        <div class="lobby-footer">
+            <p id="lobbyMessage">Waiting for the host to start...</p>
+            <button id="startGame" class="start-button">START GAME</button>
+        </div>
+    </div>
+</main>
+
+<main id="characterSelectScreen" class="screen hidden">
+    <div class="selection-container panel">
+        <div class="anime-badge small" id="selectionCategoryBadge">🎌 SECRET CHARACTER</div>
+        <div class="selection-title">CHOOSE YOUR CHARACTER</div>
+        <p class="selection-subtitle">Pick one character from the <strong id="selectionCategoryName">Anime</strong> category. Your opponent will have to discover it.</p>
+        <div id="selectionGrid" class="character-grid"></div>
+        <div id="selectedCharacterText" class="selected-character">No character selected</div>
+        <button id="confirmCharacter" class="guess-button" disabled>🔒 CONFIRM SECRET CHARACTER</button>
+        <div id="selectionStatus" class="game-status">Choose one character.</div>
+    </div>
+</main>
+
+<main id="gameScreen" class="screen hidden">
+    <div class="game-container panel">
+        <header class="game-header">
+            <div>
+                <div class="anime-badge small" id="gameCategoryBadge">🎌 ANIME EDITION</div>
+                <div class="game-title">WHO AM I?</div>
+                <div class="game-category" id="gameCategoryName">2 PLAYER • TURN BASED</div>
+            </div>
+            <div class="score-board">
+                <div class="score-player"><span id="myNameLabel">YOU</span><strong id="gameScore">0</strong></div>
+                <div class="vs">VS</div>
+                <div class="score-player"><span id="opponentNameLabel">OPPONENT</span><strong id="opponentScore">0</strong></div>
+            </div>
+        </header>
+
+        <div class="game-top-grid">
+            <section class="turn-card">
+                <div class="section-label">⚡ CURRENT TURN</div>
+                <div id="turnIndicator" class="turn-indicator">Waiting...</div>
+                <div id="timerDisplay" class="timer-display">
+                    <span>⏱️ Time Left:</span>
+                    <span id="timerValue" class="timer-green">60s</span>
+                </div>
+                <div id="gameStatus" class="game-status compact">Ask questions to discover the character.</div>
+            </section>
+            <section class="rules-card">
+                <div class="section-label">📖 RULES</div>
+                <ul>
+                    <li>Players take turns asking questions.</li>
+                    <li>Your opponent answers using <b>YES</b> or <b>NO</b>.</li>
+                    <li>Use built-in or creative custom questions.</li>
+                    <li>❌ <b>DON'T</b> ask for the character's name directly!</li>
+                    <li>Eliminate characters you think are NOT the opponent's character.</li>
+                    <li>⏱️ Each turn has <b>60 seconds</b>.</li>
+                </ul>
+                <div class="score-tip">🏆 Correct guess: up to <b>1200 pts</b>, reduced as time passes.</div>
+            </section>
+        </div>
+
+        <!-- Player's Secret Character Display -->
+        <div id="myCharacterDisplay" class="my-character-display hidden">
+            <div class="section-label">🎯 YOUR SECRET CHARACTER</div>
+            <div class="my-character-card">
+                <img id="myCharacterImage" src="" alt="Your character">
+                <div>
+                    <div id="myCharacterName" class="my-character-name">Your Character</div>
+                    <div id="myCharacterAnime" class="my-character-anime">From: Anime</div>
+                </div>
+            </div>
+        </div>
+
+        <section class="target-section">
+            <div class="section-label">🎯 YOUR OPPONENT</div>
+            <div class="target-card">
+                <div class="target-avatar">🧑‍🎤</div>
+                <div>
+                    <div id="targetName" class="target-name">Waiting...</div>
+                    <div class="target-description">They are hiding a character from you.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="question-section">
+            <div class="section-label">❓ ASK YOUR OPPONENT</div>
+            <div class="question-box">
+                <select id="questionSelect">
+                    <option value="">Choose a built-in question...</option>
+                    <option>Is your character male?</option>
+                    <option>Is your character female?</option>
+                    <option>Is your character human?</option>
+                    <option>Does your character have supernatural powers?</option>
+                    <option>Is your character from a very popular franchise?</option>
+                    <option>Is your character a main protagonist?</option>
+                    <option>Is your character a villain or antagonist?</option>
+                    <option>Is your character a fighter?</option>
+                    <option>Does your character use a weapon?</option>
+                    <option>Does your character have special abilities?</option>
+                    <option>Does your character have unusual features?</option>
+                    <option>Does your character belong to a famous team or group?</option>
+                    <option>Is your character from a recent release?</option>
+                    <option>Is your character known for being extremely strong?</option>
+                    <option>Is your character a leader?</option>
+                    <option>Does your character have a distinctive style?</option>
+                    <option>Is your character non-human?</option>
+                </select>
+                <button id="askQuestion" class="ask-button">SEND QUESTION</button>
+            </div>
+            <div class="custom-row">
+                <input id="customQuestion" type="text" maxlength="160" placeholder="Or type your own creative question...">
+                <button id="askCustomQuestion">SEND CUSTOM</button>
+            </div>
+            <div id="answerBox" class="answer-box hidden"><span id="answerText">Answer</span></div>
+        </section>
+
+        <section id="incomingSection" class="incoming-section hidden">
+            <div class="incoming-title">📨 YOUR OPPONENT ASKED</div>
+            <div id="incomingQuestionText" class="incoming-question">Question...</div>
+            <div class="answer-buttons">
+                <button id="yesButton" class="yes-button">✅ YES</button>
+                <button id="noButton" class="no-button">❌ NO</button>
+            </div>
+        </section>
+
+        <section class="characters-section">
+            <div class="section-label">🖼️ POSSIBLE CHARACTERS — CLICK ONE TO SELECT</div>
+            <div id="characterGrid" class="character-grid"></div>
+            <div id="selectedGuessText" class="selected-character">No character selected</div>
+            <div class="action-buttons">
+                <button id="eliminateButton" class="eliminate-button" disabled>❌ ELIMINATE</button>
+                <button id="guessButton" class="guess-button" disabled>🎯 MAKE FINAL GUESS</button>
+            </div>
+            <div class="eliminate-hint">💡 Eliminate characters you think are NOT your opponent's character.</div>
+        </section>
+    </div>
+</main>
+
+<main id="resultsScreen" class="screen hidden">
+    <div class="results-container panel">
+        <div class="anime-badge">🏆 GAME COMPLETE</div>
+        <h1 id="resultTitle">WINNER!</h1>
+        <p id="resultSubtitle">Great guessing!</p>
+        <div id="rankingList" class="ranking-list"></div>
+        <div id="resultDetails" class="result-details"></div>
+        <div class="result-actions">
+            <button id="playAgain" class="start-button">🔁 PLAY AGAIN</button>
+            <button id="closeGame" class="secondary-button">🏠 CLOSE GAME</button>
+        </div>
+    </div>
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
